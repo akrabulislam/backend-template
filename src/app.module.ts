@@ -1,10 +1,14 @@
 import * as Joi from 'joi';
-import * as fs from 'fs';
 import * as yaml from 'js-yaml';
+
+import { currentEnvironmentConfigFile } from 'utils/currentenv';
+import * as ormConfig from 'src/config/ormconfig';
 
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 
 const validationSchema = Joi.object({
@@ -24,13 +28,13 @@ const validationSchema = Joi.object({
 
 @Module({
   imports: [
+    TypeOrmModule.forRootAsync({
+      useFactory: () => ormConfig,
+    }),
     ConfigModule.forRoot({
       load: [
         () => {
-          const yamlConfig = fs.readFileSync(
-            `./config/${process.env.NODE_ENV}.yml`,
-            'utf8',
-          );
+          const yamlConfig = currentEnvironmentConfigFile();
           return yaml.load(yamlConfig);
         },
       ],
